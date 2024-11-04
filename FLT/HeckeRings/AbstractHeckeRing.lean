@@ -1284,9 +1284,76 @@ lemma sum_finset_single_indep2 {s t : Finset (M P)} {x y : Z} (hs : s.Nonempty) 
   obtain ⟨i, hi, hi2⟩ := c1
   apply this i hi hi2
 
+lemma sum_finset_single_indep3 {s t : Finset (M P)} {x y : M P → Z} (hs : s.Nonempty) (ht : t.Nonempty)
+  (h : ∑ i in s, single (i : M P) (x i) = ∑ i in t, single (i : M P) (y i)) :
+    ((s ∩ t) ≠ ∅ ∧ ∀ i ∈ (s ∩ t), x i = y i) ∨ ((∀ i ∈ s, x i = 0) ∧ (∀ j ∈ t, y j = 0)) := by
+  by_cases h1 : (s ∩ t) = ∅
+  simp [h1]
+  have D : Disjoint s t := by exact Finset.disjoint_iff_inter_eq_empty.mpr h1
+  have : ∑ i in s, single (i : M P) (x i) - ∑ i in t, single (i: M P) (y i) = 0 := by
+    rw [h, sub_self]
+  --rw [Finset.sum_disjiUnion]
+  have h_support : (∑ i in s, single (i : M P) (x i) - ∑ i in t, single (i : M P) (y i)).support = ∅ := by
+    rw [this, support_zero]
+  rw [sub_eq_add_neg] at this
+  rw [← @Finset.sum_neg_distrib] at this
+  have hr := sum_disj P Z s t x (-y) D
+  simp only [Pi.neg_apply, single_neg, Finset.sum_neg_distrib] at hr this
+  have tt := hr.mp this
+  have t2 := sum_single_eq_zero Z s x tt.1
+  have tt2 := tt.2
+  simp at tt2
+  have t3 := sum_single_eq_zero Z t y tt2
+  have v1 :=   Finset.Nonempty.exists_mem hs
+  have v2 :=   Finset.Nonempty.exists_mem ht
+  obtain ⟨i, hi⟩ := v1
+  obtain ⟨j, hj⟩ := v2
+  constructor
+  exact t2
+  exact t3
 
-lemma sdf {α : Type*} (s : Finsupp α Z) (a : α) : s.toFun a = s a := by
-  exact rfl
+  simp [h1]
+  left
+  have hl : ∑ i in s, single i (x i) = ∑ i in (s ∩ t), single i (x i) + ∑ i in s \ (s ∩ t), single i (x i) := by
+    have hss : (s ∩ t) ⊆ s :=  Finset.inter_subset_left
+    rw [← Finset.sum_sdiff hss]
+    rw [add_comm]
+  have hr : ∑ j in t, single j (y j) = ∑ j in (s ∩ t), single j (y j) + ∑ j in t \ (s ∩ t), single j (y j) := by
+    have hss : (s ∩ t) ⊆ t := Finset.inter_subset_right
+    rw [← Finset.sum_sdiff hss]
+    rw [add_comm]
+  rw [hr, hl] at h
+  rw [← @add_neg_eq_iff_eq_add, ← sub_eq_zero] at h
+  simp at h
+  have e1 : ∑ i ∈ s ∩ t, single i (x i) + ∑ i ∈ s \ t, single i (x i) +
+    -∑ x ∈ t \ s, single x (y x) - ∑ x ∈ s ∩ t, single x (y x) = (∑ i ∈ s ∩ t, single i (x i)
+       - ∑ x ∈ s ∩ t, single x (y x)) +
+    ∑ i ∈ s \ t, single i (x i) + -∑ x ∈ t \ s, single x (y x) := by abel
+  have e2 : (∑ i ∈ s ∩ t, single i (x i) - ∑ x ∈ s ∩ t, single x (y x))  = (∑ i ∈ s ∩ t,
+    (single i (x i) - single i (y i))) := by
+    simp only [Finset.sum_sub_distrib]
+  rw [e1,e2] at h
+  conv at h =>
+    enter [1,1,1,2]
+    ext t
+    rw [← single_sub]
+  by_cases hxy : ∀ i ∈ (s ∩ t), x i = y i
+  · simpa using  hxy
+  have := d4 P Z s t  (-y) (x) (x-y)
+  simp only [Finset.sum_sub_distrib, single_neg, Finset.sum_neg_distrib, neg_eq_zero] at this
+  have G := this h
+  have G1 := G.1
+  have := sum_single_eq_zero Z (s ∩ t) (fun _ => x - y) G1
+  simp at this
+  rw [@sub_eq_zero] at this
+  rw [← @Finset.not_nonempty_iff_eq_empty, Mathlib.Tactic.PushNeg.not_not_eq] at h1
+  have c1 : ∃ i ∈ s, i ∈ t := by
+    have :=   Finset.Nonempty.exists_mem h1
+    simpa using this
+  obtain ⟨i, hi, hi2⟩ := c1
+  apply this i hi hi2
+
+
 
 lemma 𝕋eq_of_smul_single_eq_smul (T1 T2 : (T' P)) (c₁ c₂ : Z)
   (h : ∀ (a : 𝕄 P Z), (T_single P Z T1 c₁) • a = (T_single P Z T2 c₂) • a) :
@@ -1349,6 +1416,13 @@ lemma 𝕋eq_of_smul_eq_smul (T1 T2 : (𝕋 P Z)) (h : ∀ (a : 𝕄 P Z), T1 �
   have := smul_add P Z T1.support T1.toFun
   simp_rw [T_single] at this
   simp_rw [this] at h
+  have ht : T1.support = T2.support := by sorry
+  rw [ht] at h
+
+
+
+
+
 
 
   sorry
@@ -1397,6 +1471,17 @@ lemma 𝕋eq_of_smul_eq_smul (T1 T2 : (𝕋 P Z)) (h : ∀ (a : 𝕄 P Z), T1 �
   -/
 
   sorry
+
+instance faith_if_inj (hi : Function.Injective (fun (t : 𝕋 P Z) => fun (m : 𝕄 P Z) =>  t • m)) :
+  FaithfulSMul (𝕋 P Z) (𝕄 P Z) where
+  eq_of_smul_eq_smul  {t1 t2} h := by
+    rw [Function.Injective] at hi
+    apply hi
+    ext a
+    exact h a
+
+
+
 
 noncomputable instance 𝕄smulFaithful : FaithfulSMul (𝕋 P ℤ) (𝕄 P ℤ) where
   eq_of_smul_eq_smul  {t1 t2} h := 𝕋eq_of_smul_eq_smul P ℤ t1 t2 h
