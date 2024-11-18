@@ -505,8 +505,6 @@ lemma rep_indep (D1 D2 d : T' P) : (mm P D1 D2 d).card = m' P Z D1 D2 d := by
   refine Nat.card_eq_of_bijective ?_ ?_
   sorry
 
-
-
  /-  ext x
   simp only [Finset.mem_filter, Finset.mem_univ, true_and, Finset.mem_image, exists_prop, Finset.mem_top, Finset.mem_univ_val]
   split
